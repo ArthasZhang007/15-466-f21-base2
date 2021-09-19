@@ -71,6 +71,19 @@ void DrawLines::draw(glm::vec3 const &a, glm::vec3 const &b, glm::u8vec4 const &
 	attribs.emplace_back(b, color);
 }
 
+//reference: game-0 base code by tchow
+void DrawLines::draw_rectangle(glm::vec2 const &center, glm::vec2 const &radius, glm::u8vec4 const &color) {
+	// draw rectangle as two CCW-oriented triangles
+	attribs.emplace_back(glm::vec3(center.x-radius.x, center.y-radius.y, 0.0f), color);
+	attribs.emplace_back(glm::vec3(center.x+radius.x, center.y-radius.y, 0.0f), color);
+	attribs.emplace_back(glm::vec3(center.x+radius.x, center.y+radius.y, 0.0f), color);
+
+	attribs.emplace_back(glm::vec3(center.x-radius.x, center.y-radius.y, 0.0f), color);
+	attribs.emplace_back(glm::vec3(center.x+radius.x, center.y+radius.y, 0.0f), color);
+	attribs.emplace_back(glm::vec3(center.x-radius.x, center.y+radius.y, 0.0f), color);
+}
+
+
 void DrawLines::draw_box(glm::mat4x3 const &mat, glm::u8vec4 const &color) {
 	//draw cube as three edge sets:
 

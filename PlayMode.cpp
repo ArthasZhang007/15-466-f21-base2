@@ -9,8 +9,10 @@
 #include "data_path.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
-
+#include <cmath>
 #include <random>
+#include <string>
+#include <algorithm>
 
 GLuint hexapod_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > hexapod_meshes(LoadTagDefault, []() -> MeshBuffer const * {
@@ -40,8 +42,7 @@ PlayMode::PlayMode() : scene(*hexapod_scene) {
 	//get pointers to leg for convenience:
 	for (auto &transform : scene.transforms) {
 		std::cout<<transform.name<<std::endl;
-		if (transform.name == "player1")
-		{
+		if (transform.name == "player1") {
 			player1_t = &transform;
 		}
 			
@@ -91,6 +92,12 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.downs += 1;
 			down.pressed = true;
 			return true;
+		} else if (evt.key.keysym.sym == SDLK_UP) {
+			if (left_turn) left_force = std::min(++left_force, 10);
+			else right_force = std::min(++right_force, 10);
+		} else if (evt.key.keysym.sym == SDLK_DOWN) {
+			if (left_turn) left_force = std::max(--left_force, 1);
+			else right_force = std::max(--right_force, 1);
 		}
 	} else if (evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.sym == SDLK_a) {
@@ -205,6 +212,31 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	GL_ERRORS(); //print any errors produced by this setup code
 
 	scene.draw(*camera);
+
+	{
+		// draw force bars
+		glDisable(GL_DEPTH_TEST);
+		float aspect = float(drawable_size.x) / float(drawable_size.y);
+		DrawLines bars(glm::mat4(
+			1.0f / aspect, 0.0f, 0.0f, 0.0f,
+			0.0f, 1.0f, 0.0f, 0.0f,
+			0.0f, 0.0f, 1.0f, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		));
+		constexpr float H = 0.09f;
+		std::string lforce = "Left force at: ";
+		lforce += std::to_string(left_force);
+		bars.draw_text(lforce,
+			glm::vec3(-aspect + 0.9f * H, -1.0 + 20.0f * H, 0.0),
+			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+			glm::u8vec4(0xff, 0xff, 0xff, 0xff));
+		std::string rforce = "Right force at: ";
+		rforce += std::to_string(right_force);
+		bars.draw_text(rforce,
+			glm::vec3(-aspect + 32.2f * H, -1.0 + 20.0f * H, 0.0),
+			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+			glm::u8vec4(0xff, 0xff, 0xff, 0xff));
+	}
 
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
