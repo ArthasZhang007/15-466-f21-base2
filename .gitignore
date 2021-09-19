@@ -10,3 +10,4 @@ dist/game.exe
 scenes/show-meshes*
 scenes/show-scene*
 *.blend[0-9]
+.DS_Store
