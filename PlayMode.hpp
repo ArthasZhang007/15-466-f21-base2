@@ -1,11 +1,36 @@
 #include "Mode.hpp"
-
 #include "Scene.hpp"
 
 #include <glm/glm.hpp>
 
 #include <vector>
 #include <deque>
+namespace {
+const float deacc_const = 0.01f;
+const float ball_radius = 0.5f;
+struct ball{
+	glm::vec3 velocity;
+	Scene::Transform *cur;
+	bool pushable;
+	ball(){velocity = glm::vec3(); cur = nullptr; pushable = true;}
+	void update(float elapsed){
+		cur->position += velocity * elapsed;
+		velocity *= (1.0f - deacc_const * elapsed);
+	}
+	void push(glm::vec3 acc){
+		velocity += acc;
+	}
+};
+float len(glm::vec3 x){
+	return std::sqrt(x.x*x.x+x.y*x.y+x.z*x.z);
+}
+glm::vec3 extend(glm::vec3 x, float k){
+	return x / len(x) * k;
+}
+void collide(ball &ball_A, ball & ball_B){
+
+}
+}
 
 struct PlayMode : Mode {
 	PlayMode();
@@ -33,7 +58,7 @@ struct PlayMode : Mode {
 	Scene::Transform *lower_leg = nullptr;
 
 	//self-defined
-	Scene::Transform *player1_t = nullptr;
+	ball player1_t;
 	Scene::Transform *arrow1_t = nullptr;
 	glm::quat arrow_base_rotation;
 
