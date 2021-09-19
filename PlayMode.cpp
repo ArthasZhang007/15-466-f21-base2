@@ -44,6 +44,11 @@ PlayMode::PlayMode() : scene(*hexapod_scene) {
 		{
 			player1_t = &transform;
 		}
+			
+		if (transform.name == "arrow"){
+			arrow1_t = &transform;
+			arrow_base_rotation = arrow1_t->rotation;
+		}
 		/*if (transform.name == "Hip.BL") hip = &transform;
 		else if (transform.name == "UpperLeg.BL") upper_leg = &transform;
 		else if (transform.name == "LowerLeg.BL") lower_leg = &transform;*/
@@ -130,7 +135,12 @@ void PlayMode::update(float elapsed) {
 	wobble += elapsed / 10.0f;
 	wobble -= std::floor(wobble);
 
-	player1_t->position.z += 0.02f;
+	//player1_t->position.z += 0.02f;
+	arrow1_t->rotation = arrow_base_rotation * glm::angleAxis(
+		2.0f * float(M_PI) * wobble, 
+		//glm::radians(7.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
+		glm::vec3(0.0f, 0.0f, 1.0f)
+	); 
 	/*hip->rotation = hip_base_rotation * glm::angleAxis(
 		glm::radians(5.0f * std::sin(wobble * 2.0f * float(M_PI))),
 		glm::vec3(0.0f, 1.0f, 0.0f)
