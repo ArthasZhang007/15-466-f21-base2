@@ -16,11 +16,11 @@
 
 namespace
 {
-	const float collide_radius = 6.0f;
+	const float collide_radius = 3.0f;
 	const float inf = 9999999.0f;
 	float len(glm::vec3 x)
 	{
-		return std::sqrt(x.x * x.x + x.y * x.y + x.z * x.z);
+		return std::sqrt(x.x * x.x + x.y * x.y);
 	}
 	glm::vec3 extend(glm::vec3 x, float k)
 	{
@@ -28,16 +28,19 @@ namespace
 	}
 	glm::vec3 real_pos(Scene::Transform &A)
 	{
-		glm::vec4 b(A.position, 1.0f);
-		return A.make_local_to_world() * b;
+		glm::vec4 b(A.position, 0.0f);
+		return A.make_parent_to_local() * b;
 	}
 	void collide(ball &ball_A, ball &ball_B)
 	{
 		std::swap(ball_A.velocity, ball_B.velocity);
 	}
+	float distance(Scene::Transform &A, Scene::Transform &B){
+		return len(real_pos(A) - real_pos(B));
+	}
 	bool iscollide(Scene::Transform &A, Scene::Transform &B)
 	{
-		return std::abs(len(real_pos(A) - real_pos(B))) <= collide_radius;
+		return distance(A,B) <= collide_radius;
 	}
 	void remove_off(Scene::Transform &A)
 	{
@@ -173,14 +176,14 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				player1_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_1;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player1_t.push(extend(dir, 0.0f - left_force));
+				player1_t.push(extend(dir, 0.0f + left_force * 30));
 			}
 			if (player2_t.pushable && !left_turn)
 			{
 				player2_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_2;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player2_t.push(extend(dir, 0.0f - right_force));
+				player2_t.push(extend(dir, 0.0f + right_force * 30));
 			}
 			left_turn = !left_turn;
 		}
@@ -240,6 +243,8 @@ void PlayMode::update(float elapsed)
 {
 
 	//slowly rotates through [0,1):
+	total_time += elapsed;
+
 	if (player1_t.pushable)
 	{
 		wobble_1 += elapsed / 5.0f;
@@ -258,7 +263,7 @@ void PlayMode::update(float elapsed)
 														angle_2,
 														glm::vec3(0.0f, 0.0f, 1.0f));
 	}
-
+	//std::cout<<elapsed<<std::endl;
 	if (!player2_t.pushable && !player1_t.pushable)
 	{
 		player1_t.update(elapsed);
@@ -266,6 +271,12 @@ void PlayMode::update(float elapsed)
 		//collide
 		for (auto &c : coins)
 		{
+			if(total_time >= 1.5f){
+				
+				std::cout<<c->name << " :1 " << distance(*c, *player1_t.cur) <<std::endl;
+				std::cout<<c->name << " :2 " << distance(*c, *player2_t.cur) <<std::endl;
+			}
+
 			if (iscollide(*c, *player1_t.cur))
 			{
 				++left_pts;
@@ -280,6 +291,9 @@ void PlayMode::update(float elapsed)
 		if (iscollide(*player1_t.cur, *player2_t.cur))
 		{
 			collide(player1_t, player2_t);
+		}
+		if(total_time > 1.5f){
+			total_time = 0.0f;
 		}
 	}
 

@@ -72,7 +72,7 @@ struct PlayMode : Mode {
 	int right_pts = 0;
 
 	std::vector<std::shared_ptr<Scene::Transform>> coins;
-	
+	float total_time = 0.0f;
 	//camera:
 	Scene::Camera *camera = nullptr;
 
