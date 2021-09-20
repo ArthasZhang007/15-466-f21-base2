@@ -57,7 +57,7 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 			player1_t.cur = &transform;
 		}
 
-		if (transform.name == "arrow")
+		if (transform.name == "arrow1")
 		{
 			arrow1_t = &transform;
 			arrow_base_rotation = arrow1_t->rotation;
@@ -132,8 +132,11 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				player1_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player1_t.push(extend(dir, -2.0f));
+				player1_t.push(extend(dir, -3.5f));
 			}
+		}
+		else if (evt.key.keysym.sym == SDLK_r){
+			PlayMode();
 		}
 	}
 	else if (evt.type == SDL_KEYUP)
@@ -187,7 +190,7 @@ void PlayMode::update(float elapsed)
 {
 
 	//slowly rotates through [0,1):
-	wobble += elapsed / 10.0f;
+	wobble += elapsed / 5.0f;
 	wobble -= std::floor(wobble);
 
 	float angle = 2.0f * float(M_PI) * wobble;

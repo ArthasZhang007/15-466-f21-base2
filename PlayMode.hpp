@@ -63,10 +63,6 @@ struct PlayMode : Mode {
 	glm::quat lower_leg_base_rotation;
 	float wobble = 0.0f;
 
-	//----- game state -----
-    glm::vec2 court_radius = glm::vec2(7.0f, 5.0f);
-    glm::vec2 paddle_radius = glm::vec2(0.2f, 1.0f);
-    glm::vec2 ball_radius = glm::vec2(0.2f, 0.2f);
 
 	bool left_turn = true;
 	int left_force = 5;
