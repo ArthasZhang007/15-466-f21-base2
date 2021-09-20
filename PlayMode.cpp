@@ -12,6 +12,7 @@
 #include <cmath>
 #include <random>
 #include <string>
+#include <iostream>
 #include <algorithm>
 
 namespace
@@ -28,7 +29,7 @@ namespace
 	}
 	glm::vec3 real_pos(Scene::Transform &A)
 	{
-		glm::vec4 b(A.position, 1.0f);
+		glm::vec4 b(A.position, 0.0f);
 		return A.make_local_to_world() * b;
 	}
 	void collide(ball &ball_A, ball &ball_B)
@@ -105,7 +106,7 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 			coins.emplace_back(&transform);
 		}
 		std::cout << transform.name << "\n";
-		auto &A = real_pos(transform);
+		auto A = real_pos(transform);
 		std::cout << " coin.x: " << A.x << " coin.y " << A.y << " coin.z " << A.z << "\n";
 	}
 	//get pointer to camera for convenience:
@@ -173,14 +174,14 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				player1_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_1;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player1_t.push(extend(dir, 0.0f - left_force));
+				player1_t.push(extend(dir, left_force * 10.0f));
 			}
 			if (player2_t.pushable && !left_turn)
 			{
 				player2_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_2;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player2_t.push(extend(dir, 0.0f - right_force));
+				player2_t.push(extend(dir, right_force * 10.0f));
 			}
 			left_turn = !left_turn;
 		}
@@ -268,17 +269,20 @@ void PlayMode::update(float elapsed)
 		{
 			if (iscollide(*c, *player1_t.cur))
 			{
+				std::cout << "left ball collide \n";
 				++left_pts;
 				remove_off(*c);
 			}
 			else if (iscollide(*c, *player2_t.cur))
 			{
+				std::cout << "right ball collide \n";
 				++right_pts;
 				remove_off(*c);
 			}
 		}
 		if (iscollide(*player1_t.cur, *player2_t.cur))
 		{
+			std::cout << "ball collide \n";
 			collide(player1_t, player2_t);
 		}
 	}
