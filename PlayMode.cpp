@@ -14,25 +14,37 @@
 #include <string>
 #include <algorithm>
 
-namespace {
+namespace
+{
 	const float collide_radius = 6.0f;
 	const float inf = 9999999.0f;
-	float len(glm::vec3 x){
-		return std::sqrt(x.x*x.x+x.y*x.y+x.z*x.z);
+	float len(glm::vec3 x)
+	{
+		return std::sqrt(x.x * x.x + x.y * x.y + x.z * x.z);
 	}
-	glm::vec3 extend(glm::vec3 x, float k){
+	glm::vec3 extend(glm::vec3 x, float k)
+	{
 		return x / len(x) * k;
 	}
-	void collide(ball &ball_A, ball & ball_B){
-		// std::swap(ball_A.velocity, ball_B.velocity);
-	} 
-	bool iscollide(Scene::Transform &A, Scene::Transform &B){
-		return std::abs(len(A.position - B.position)) <= collide_radius;
+	glm::vec3 real_pos(Scene::Transform &A)
+	{
+		glm::vec4 b(A.position, 1.0f);
+		return A.make_local_to_world() * b;
 	}
-	void remove_off(Scene::Transform &A){
-		A.position = glm::vec3(inf,inf,inf);
+	void collide(ball &ball_A, ball &ball_B)
+	{
+		std::swap(ball_A.velocity, ball_B.velocity);
 	}
-}
+	bool iscollide(Scene::Transform &A, Scene::Transform &B)
+	{
+		return std::abs(len(real_pos(A) - real_pos(B))) <= collide_radius;
+	}
+	void remove_off(Scene::Transform &A)
+	{
+		A.position = glm::vec3(inf, inf, inf);
+	}
+
+} // namespace
 
 GLuint hexapod_meshes_for_lit_color_texture_program = 0;
 Load<MeshBuffer> hexapod_meshes(LoadTagDefault, []() -> MeshBuffer const * {
@@ -62,32 +74,39 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 	//get pointers to leg for convenience:
 	for (auto &transform : scene.transforms)
 	{
-		std::cout << transform.name << std::endl;
-		if (transform.name == "player1") {
-			std::cout << transform.name << "\n";
-			std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
+		//std::cout << transform.name << std::endl;
+		if (transform.name == "player1")
+		{
+			//std::cout << transform.name << "\n";
+			//std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
 			player1_t.cur = &transform;
 		}
-		if (transform.name == "player2") {
-			std::cout << transform.name << "\n";
-			std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
+		if (transform.name == "player2")
+		{
+			//std::cout << transform.name << "\n";
+			//std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
 			player2_t.cur = &transform;
 		}
 
-		if (transform.name == "arrow1") {
+		if (transform.name == "arrow1")
+		{
 			arrow1_t = &transform;
 			arrow1_base_rotation = arrow1_t->rotation;
 		}
 
-		if (transform.name == "arrow2") {
+		if (transform.name == "arrow2")
+		{
 			arrow2_t = &transform;
 			arrow2_base_rotation = arrow2_t->rotation;
 		}
-		if (transform.name.substr(0,4) == "Coin") {
-			std::cout << transform.name << "\n";
-			std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
+		if (transform.name.substr(0, 4) == "Coin")
+		{
+
 			coins.emplace_back(&transform);
 		}
+		std::cout << transform.name << "\n";
+		auto &A = real_pos(transform);
+		std::cout << " coin.x: " << A.x << " coin.y " << A.y << " coin.z " << A.z << "\n";
 	}
 	//get pointer to camera for convenience:
 	if (scene.cameras.size() != 1)
@@ -132,29 +151,41 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.downs += 1;
 			down.pressed = true;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_UP) {
-			if (left_turn) left_force = std::min(++left_force, 10);
-			else right_force = std::min(++right_force, 10);
-		} else if (evt.key.keysym.sym == SDLK_DOWN) {
-			if (left_turn) left_force = std::max(--left_force, 1);
-			else right_force = std::max(--right_force, 1);
 		}
-		else if (evt.key.keysym.sym == SDLK_SPACE) {
-			if (player1_t.pushable && left_turn) {
+		else if (evt.key.keysym.sym == SDLK_UP)
+		{
+			if (left_turn)
+				left_force = std::min(++left_force, 10);
+			else
+				right_force = std::min(++right_force, 10);
+		}
+		else if (evt.key.keysym.sym == SDLK_DOWN)
+		{
+			if (left_turn)
+				left_force = std::max(--left_force, 1);
+			else
+				right_force = std::max(--right_force, 1);
+		}
+		else if (evt.key.keysym.sym == SDLK_SPACE)
+		{
+			if (player1_t.pushable && left_turn)
+			{
 				player1_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_1;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player1_t.push(extend(dir, 0.0f-left_force));
+				player1_t.push(extend(dir, 0.0f - left_force));
 			}
-			if (player2_t.pushable && !left_turn) {
+			if (player2_t.pushable && !left_turn)
+			{
 				player2_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_2;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player2_t.push(extend(dir, 0.0f-right_force));
+				player2_t.push(extend(dir, 0.0f - right_force));
 			}
 			left_turn = !left_turn;
 		}
-		else if (evt.key.keysym.sym == SDLK_r){
+		else if (evt.key.keysym.sym == SDLK_r)
+		{
 			PlayMode();
 		}
 	}
@@ -189,8 +220,10 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
 	}
-	else if (evt.type == SDL_MOUSEMOTION) {
-		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
+	else if (evt.type == SDL_MOUSEMOTION)
+	{
+		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
+		{
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y));
@@ -203,39 +236,49 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-void PlayMode::update(float elapsed) {
+void PlayMode::update(float elapsed)
+{
 
 	//slowly rotates through [0,1):
-	if (player1_t.pushable) {
+	if (player1_t.pushable)
+	{
 		wobble_1 += elapsed / 5.0f;
 		wobble_1 -= std::floor(wobble_1);
 		float angle_1 = 2.0f * float(M_PI) * wobble_1;
 		arrow1_t->rotation = arrow1_base_rotation * glm::angleAxis(
-													   angle_1,
-													   glm::vec3(0.0f, 0.0f, 1.0f));
-	} else if (player2_t.pushable){
+														angle_1,
+														glm::vec3(0.0f, 0.0f, 1.0f));
+	}
+	else if (player2_t.pushable)
+	{
 		wobble_2 += elapsed / 5.0f;
 		wobble_2 -= std::floor(wobble_2);
 		float angle_2 = 2.0f * float(M_PI) * wobble_2;
 		arrow2_t->rotation = arrow2_base_rotation * glm::angleAxis(
-													   angle_2,
-													   glm::vec3(0.0f, 0.0f, 1.0f));
+														angle_2,
+														glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 
-	if (!player2_t.pushable && !player1_t.pushable) {
+	if (!player2_t.pushable && !player1_t.pushable)
+	{
 		player1_t.update(elapsed);
 		player2_t.update(elapsed);
 		//collide
-		for (auto &c : coins) {
-			if (iscollide(*c, *player1_t.cur)) {
+		for (auto &c : coins)
+		{
+			if (iscollide(*c, *player1_t.cur))
+			{
 				++left_pts;
 				remove_off(*c);
-			} else if (iscollide(*c, *player2_t.cur)) {
+			}
+			else if (iscollide(*c, *player2_t.cur))
+			{
 				++right_pts;
 				remove_off(*c);
 			}
 		}
-		if (iscollide(*player1_t.cur, *player2_t.cur)) {
+		if (iscollide(*player1_t.cur, *player2_t.cur))
+		{
 			collide(player1_t, player2_t);
 		}
 	}
@@ -305,23 +348,22 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 			1.0f / aspect, 0.0f, 0.0f, 0.0f,
 			0.0f, 1.0f, 0.0f, 0.0f,
 			0.0f, 0.0f, 1.0f, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-		));
+			0.0f, 0.0f, 0.0f, 1.0f));
 		constexpr float H = 0.09f;
 		std::string lforce = "Left force at: ";
 		lforce += std::to_string(left_force);
 		lforce += " Current Score is: " + std::to_string(left_pts);
 		bars.draw_text(lforce,
-			glm::vec3(-aspect + 0.9f * H, -1.0 + 20.0f * H, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0xff, 0xff, 0xff, 0xff));
+					   glm::vec3(-aspect + 0.9f * H, -1.0 + 20.0f * H, 0.0),
+					   glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					   glm::u8vec4(0xff, 0xff, 0xff, 0xff));
 		std::string rforce = "Right force at: ";
 		rforce += std::to_string(right_force);
 		rforce += " Current Score is: " + std::to_string(right_pts);
 		bars.draw_text(rforce,
-			glm::vec3(-aspect + 25.2f * H, -1.0 + 20.0f * H, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0xff, 0xff, 0xff, 0xff));
+					   glm::vec3(-aspect + 25.2f * H, -1.0 + 20.0f * H, 0.0),
+					   glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
+					   glm::u8vec4(0xff, 0xff, 0xff, 0xff));
 	}
 
 	{ //use DrawLines to overlay some text:
