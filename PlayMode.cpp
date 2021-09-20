@@ -124,13 +124,13 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				player1_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_1;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player1_t.push(extend(dir, -3.5f));
+				player1_t.push(extend(dir, 0.0f-left_force));
 			}
 			if (player2_t.pushable && !left_turn) {
 				player2_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_2;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player2_t.push(extend(dir, -2.0f));
+				player2_t.push(extend(dir, 0.0f-right_force));
 			}
 			left_turn = !left_turn;
 		}
@@ -202,14 +202,6 @@ void PlayMode::update(float elapsed) {
 													   glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 
-	// if (player1_t.pushable && left_turn) {
-		
-	// }
-	// if (player2_t.pushable && !left_turn) {
-	// 	arrow2_t->rotation = arrow_base_rotation * glm::angleAxis(
-	// 												   angle_2,
-	// 												   glm::vec3(0.0f, 0.0f, 1.0f));
-	// }
 	if (!player2_t.pushable && !player1_t.pushable) {
 		player1_t.update(elapsed);
 		player2_t.update(elapsed);
@@ -285,14 +277,16 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		constexpr float H = 0.09f;
 		std::string lforce = "Left force at: ";
 		lforce += std::to_string(left_force);
+		lforce += " Current Score is: " + std::to_string(left_pts);
 		bars.draw_text(lforce,
 			glm::vec3(-aspect + 0.9f * H, -1.0 + 20.0f * H, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0xff));
 		std::string rforce = "Right force at: ";
 		rforce += std::to_string(right_force);
+		rforce += " Current Score is: " + std::to_string(right_pts);
 		bars.draw_text(rforce,
-			glm::vec3(-aspect + 32.2f * H, -1.0 + 20.0f * H, 0.0),
+			glm::vec3(-aspect + 25.2f * H, -1.0 + 20.0f * H, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0xff));
 	}
