@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <deque>
+#include <iostream>
 #include <memory>
 namespace {
 const float deacc_const = 0.5f;
@@ -20,6 +21,7 @@ struct ball{
 		cur->position += velocity * elapsed;
 		velocity *= (1.0f - deacc_const * elapsed);
 		// collide checking
+		// use central coin as the origin point and do detect boundary collision testing
 	}
 	void push(glm::vec3 acc){
 		velocity += acc;
@@ -50,11 +52,6 @@ struct PlayMode : Mode {
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
-	//hexapod leg to wobble:
-	Scene::Transform *hip = nullptr;
-	Scene::Transform *upper_leg = nullptr;
-	Scene::Transform *lower_leg = nullptr;
-
 	//self-defined
 	ball player1_t;
 	ball player2_t;
@@ -72,8 +69,13 @@ struct PlayMode : Mode {
 	int left_pts = 0;
 	int right_pts = 0;
 
+	Scene::Transform *endpt1;
+	Scene::Transform *endpt2;
+
+	glm::vec3 world_origin = glm::vec3(0.0f, 0.0f, 0.0f);
+
 	std::vector<std::shared_ptr<Scene::Transform>> coins;
-	std::vector<ball> fake_coins;
+	// std::vector<ball> fake_coins;
 	float total_time = 0.0f;
 	//camera:
 	Scene::Camera *camera = nullptr;

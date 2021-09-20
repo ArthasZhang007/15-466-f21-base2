@@ -27,11 +27,6 @@ namespace
 	{
 		return x / len(x) * k;
 	}
-	glm::vec3 real_pos(Scene::Transform &A)
-	{
-		glm::vec4 b(A.position, 0.0f);
-		return A.make_parent_to_local() * b;
-	}
 	void collide(ball &ball_A, ball &ball_B)
 	{
 		std::swap(ball_A.velocity, ball_B.velocity);
@@ -105,14 +100,20 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 		}
 		if (transform.name.substr(0, 4) == "Coin")
 		{
-			glm::vec3 fake_speed = {0.0f,0.0f,0.0f};\
-			auto fake_ball = ball(fake_speed, &transform, false);
-			fake_coins.push_back(std::move(fake_ball));
+			if (transform.name == "Coin1") {
+				world_origin = transform.position;
+			}
 			coins.emplace_back(&transform);
 		}
-		std::cout << transform.name << "\n";
-		auto A = real_pos(transform);
-		std::cout << " coin.x: " << A.x << " coin.y " << A.y << " coin.z " << A.z << "\n";
+
+		if (transform.name == "Goal1") {
+			// get goal1 position, dont store transform
+			endpt1 = &transform;
+		}
+		if (transform.name == "Goal2") {
+			// get goal2 position
+			endpt2 = &transform;
+		}
 	}
 	//get pointer to camera for convenience:
 	if (scene.cameras.size() != 1)
@@ -256,9 +257,18 @@ void PlayMode::update(float elapsed) {
 		player1_t.update(elapsed);
 		player2_t.update(elapsed);
 		//collide
-		/*
 		for (auto &c : coins)
 		{
+			//using coin1 as the bases 
+			if (c->name == "Coin1") {
+				// calculate distance
+				if (len(world_origin - player1_t.cur->position) >= 150) {
+					player1_t.velocity *= -1;
+				}
+				if (len(world_origin - player2_t.cur->position) >= 150) {
+					player2_t.velocity *= -1;
+				}
+			}
 			if(total_time >= 1.5f){
 				
 				std::cout<<c->name << " :1 " << distance(*c, *player1_t.cur) <<std::endl;
@@ -278,24 +288,7 @@ void PlayMode::update(float elapsed) {
 				remove_off(*c);
 			}
 		}
-		*/
-		for (auto &c : fake_coins) {
-			if(total_time >= 1.5f){
-				std::cout<<c.cur->name << " :1 " << distance(*c.cur, *player1_t.cur) <<std::endl;
-				std::cout<<c.cur->name << " :2 " << distance(*c.cur, *player2_t.cur) <<std::endl;
-			}
 
-			if (iscollide(*c.cur, *player1_t.cur)) {
-				std::cout << "left ball collide \n";
-				++left_pts;
-				remove_off(*c.cur);
-			}
-			else if (iscollide(*c.cur, *player2_t.cur)) {
-				std::cout << "right ball collide \n";
-				++right_pts;
-				remove_off(*c.cur);
-			}
-		}
 		if (iscollide(*player1_t.cur, *player2_t.cur)) {
 			std::cout << "ball collide \n";
 			collide(player1_t, player2_t);
@@ -303,7 +296,9 @@ void PlayMode::update(float elapsed) {
 		if(total_time > 1.5f) {
 			total_time = 0.0f;
 		}
+		
 	}
+	
 
 	//move camera:
 	{
