@@ -15,11 +15,22 @@
 #include <algorithm>
 
 namespace {
+	const float collide_radius = 0.15f;
+	const float inf = 9999999.0f;
 	float len(glm::vec3 x){
 		return std::sqrt(x.x*x.x+x.y*x.y+x.z*x.z);
 	}
 	glm::vec3 extend(glm::vec3 x, float k){
 		return x / len(x) * k;
+	}
+	void collide(ball &ball_A, ball & ball_B){
+		std::swap(ball_A.velocity, ball_B.velocity);
+	} 
+	bool iscollide(Scene::Transform &A, Scene::Transform &B){
+		return std::fabs(A.position - B.position) <= collide_radius;
+	}
+	void remove_off(Scene::Transform &A){
+		A.position = glm::vec3(inf,inf,inf);
 	}
 }
 
