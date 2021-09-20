@@ -52,28 +52,18 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 	for (auto &transform : scene.transforms)
 	{
 		std::cout << transform.name << std::endl;
-		if (transform.name == "player1")
-		{
+		if (transform.name == "player1") {
 			player1_t.cur = &transform;
 		}
+		if (transform.name == "player2") {
+			player2_t.cur = &transform;
+		}
 
-		if (transform.name == "arrow")
-		{
+		if (transform.name == "arrow") {
 			arrow1_t = &transform;
 			arrow_base_rotation = arrow1_t->rotation;
 		}
-		/*if (transform.name == "Hip.BL") hip = &transform;
-		else if (transform.name == "UpperLeg.BL") upper_leg = &transform;
-		else if (transform.name == "LowerLeg.BL") lower_leg = &transform;*/
 	}
-	/*if (hip == nullptr) throw std::runtime_error("Hip not found.");
-	if (upper_leg == nullptr) throw std::runtime_error("Upper leg not found.");
-	if (lower_leg == nullptr) throw std::runtime_error("Lower leg not found.");
-
-	hip_base_rotation = hip->rotation;
-	upper_leg_base_rotation = upper_leg->rotation;
-	lower_leg_base_rotation = lower_leg->rotation;*/
-
 	//get pointer to camera for convenience:
 	if (scene.cameras.size() != 1)
 		throw std::runtime_error("Expecting scene to have exactly one camera, but it has " + std::to_string(scene.cameras.size()));
@@ -124,16 +114,20 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			if (left_turn) left_force = std::max(--left_force, 1);
 			else right_force = std::max(--right_force, 1);
 		}
-		else if (evt.key.keysym.sym == SDLK_SPACE)
-		{
-			left_turn = !left_turn;
-			if (player1_t.pushable == true)
-			{
+		else if (evt.key.keysym.sym == SDLK_SPACE) {
+			if (player1_t.pushable == true && left_turn) {
 				player1_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
 				player1_t.push(extend(dir, -2.0f));
 			}
+			if (player2_t.pushable == true && !left_turn) {
+				player2_t.pushable = false;
+				float angle = 2.0f * float(M_PI) * wobble;
+				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
+				player2_t.push(extend(dir, -2.0f));
+			}
+			left_turn = !left_turn;
 		}
 	}
 	else if (evt.type == SDL_KEYUP)
@@ -167,10 +161,8 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
 	}
-	else if (evt.type == SDL_MOUSEMOTION)
-	{
-		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
-		{
+	else if (evt.type == SDL_MOUSEMOTION) {
+		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y));
@@ -192,29 +184,18 @@ void PlayMode::update(float elapsed)
 
 	float angle = 2.0f * float(M_PI) * wobble;
 
-	if (player1_t.pushable)
-	{
+	if (player1_t.pushable && left_turn) {
 		arrow1_t->rotation = arrow_base_rotation * glm::angleAxis(
 													   angle,
 													   glm::vec3(0.0f, 0.0f, 1.0f));
 	}
-	player1_t.update(elapsed);
-	/*hip->rotation = hip_base_rotation * glm::angleAxis(
-		glm::radians(5.0f * std::sin(wobble * 2.0f * float(M_PI))),
-		glm::vec3(0.0f, 1.0f, 0.0f)
-	);
-	upper_leg->rotation = upper_leg_base_rotation * glm::angleAxis(
-		glm::radians(7.0f * std::sin(wobble * 2.0f * 2.0f * float(M_PI))),
-		glm::vec3(0.0f, 0.0f, 1.0f)
-	);
-	lower_leg->rotation = lower_leg_base_rotation * glm::angleAxis(
-		glm::radians(10.0f * std::sin(wobble * 3.0f * 2.0f * float(M_PI))),
-		glm::vec3(0.0f, 0.0f, 1.0f)
-	);*/
+	if (!player2_t.pushable && !player1_t.pushable) {
+		player1_t.update(elapsed);
+		player2_t.update(elapsed);
+	}
 
 	//move camera:
 	{
-
 		//combine inputs into a move:
 		constexpr float PlayerSpeed = 30.0f;
 		glm::vec2 move = glm::vec2(0.0f);
@@ -233,7 +214,7 @@ void PlayMode::update(float elapsed)
 
 		glm::mat4x3 frame = camera->transform->make_local_to_parent();
 		glm::vec3 right = frame[0];
-		//glm::vec3 up = frame[1];
+		// glm::vec3 up = frame[1];
 		glm::vec3 forward = -frame[2];
 
 		camera->transform->position += move.x * right + move.y * forward;
