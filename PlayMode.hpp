@@ -24,7 +24,7 @@ struct ball{
 };
 // void collide(ball &ball_A, ball & ball_B){
 	
-// }
+// } 
 }
 
 struct PlayMode : Mode {
