@@ -1,4 +1,4 @@
-# Double Golf
+# Fake Double G0lffff Bowl
 
 Author: Lingxi Zhang,  Zhengjia Cao
 
@@ -6,7 +6,7 @@ Design: A game based on golf but more than that. The player has to adjust the ma
 
 Screen Shot:
 
-![Screen Shot](screenshot.png)
+![16a45277c28465c88110dc4909937426.png](https://www.imgge.com/images/2021/09/21/16a45277c28465c88110dc4909937426.png)
 
 How To Play:
 
