@@ -15,7 +15,7 @@
 #include <algorithm>
 
 namespace {
-	const float collide_radius = 0.15f;
+	const float collide_radius = 6.0f;
 	const float inf = 9999999.0f;
 	float len(glm::vec3 x){
 		return std::sqrt(x.x*x.x+x.y*x.y+x.z*x.z);
@@ -24,7 +24,7 @@ namespace {
 		return x / len(x) * k;
 	}
 	void collide(ball &ball_A, ball & ball_B){
-		std::swap(ball_A.velocity, ball_B.velocity);
+		// std::swap(ball_A.velocity, ball_B.velocity);
 	} 
 	bool iscollide(Scene::Transform &A, Scene::Transform &B){
 		return std::abs(len(A.position - B.position)) <= collide_radius;
@@ -64,9 +64,13 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 	{
 		std::cout << transform.name << std::endl;
 		if (transform.name == "player1") {
+			std::cout << transform.name << "\n";
+			std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
 			player1_t.cur = &transform;
 		}
 		if (transform.name == "player2") {
+			std::cout << transform.name << "\n";
+			std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
 			player2_t.cur = &transform;
 		}
 
@@ -78,6 +82,11 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 		if (transform.name == "arrow2") {
 			arrow2_t = &transform;
 			arrow2_base_rotation = arrow2_t->rotation;
+		}
+		if (transform.name.substr(0,4) == "Coin") {
+			std::cout << transform.name << "\n";
+			std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
+			coins.emplace_back(&transform);
 		}
 	}
 	//get pointer to camera for convenience:
@@ -135,13 +144,13 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 				player1_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_1;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player1_t.push(extend(dir, -3.5f));
+				player1_t.push(extend(dir, 0.0f-left_force));
 			}
 			if (player2_t.pushable && !left_turn) {
 				player2_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_2;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player2_t.push(extend(dir, -2.0f));
+				player2_t.push(extend(dir, 0.0f-right_force));
 			}
 			left_turn = !left_turn;
 		}
@@ -213,17 +222,22 @@ void PlayMode::update(float elapsed) {
 													   glm::vec3(0.0f, 0.0f, 1.0f));
 	}
 
-	// if (player1_t.pushable && left_turn) {
-		
-	// }
-	// if (player2_t.pushable && !left_turn) {
-	// 	arrow2_t->rotation = arrow_base_rotation * glm::angleAxis(
-	// 												   angle_2,
-	// 												   glm::vec3(0.0f, 0.0f, 1.0f));
-	// }
 	if (!player2_t.pushable && !player1_t.pushable) {
 		player1_t.update(elapsed);
 		player2_t.update(elapsed);
+		//collide
+		for (auto &c : coins) {
+			if (iscollide(*c, *player1_t.cur)) {
+				++left_pts;
+				remove_off(*c);
+			} else if (iscollide(*c, *player2_t.cur)) {
+				++right_pts;
+				remove_off(*c);
+			}
+		}
+		if (iscollide(*player1_t.cur, *player2_t.cur)) {
+			collide(player1_t, player2_t);
+		}
 	}
 
 	//move camera:
@@ -296,14 +310,16 @@ void PlayMode::draw(glm::uvec2 const &drawable_size)
 		constexpr float H = 0.09f;
 		std::string lforce = "Left force at: ";
 		lforce += std::to_string(left_force);
+		lforce += " Current Score is: " + std::to_string(left_pts);
 		bars.draw_text(lforce,
 			glm::vec3(-aspect + 0.9f * H, -1.0 + 20.0f * H, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0xff));
 		std::string rforce = "Right force at: ";
 		rforce += std::to_string(right_force);
+		rforce += " Current Score is: " + std::to_string(right_pts);
 		bars.draw_text(rforce,
-			glm::vec3(-aspect + 32.2f * H, -1.0 + 20.0f * H, 0.0),
+			glm::vec3(-aspect + 25.2f * H, -1.0 + 20.0f * H, 0.0),
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0xff));
 	}

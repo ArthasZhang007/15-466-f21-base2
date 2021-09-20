@@ -6,8 +6,9 @@
 
 #include <vector>
 #include <deque>
+#include <memory>
 namespace {
-const float deacc_const = 0.01f;
+const float deacc_const = 0.5f;
 const float ball_radius = 0.5f;
 struct ball{
 	glm::vec3 velocity;
@@ -17,6 +18,7 @@ struct ball{
 	void update(float elapsed){
 		cur->position += velocity * elapsed;
 		velocity *= (1.0f - deacc_const * elapsed);
+		// collide checking
 	}
 	void push(glm::vec3 acc){
 		velocity += acc;
@@ -66,6 +68,10 @@ struct PlayMode : Mode {
 	bool left_turn = true;
 	int left_force = 5;
 	int right_force = 5;
+	int left_pts = 0;
+	int right_pts = 0;
+
+	std::vector<std::shared_ptr<Scene::Transform>> coins;
 	
 	//camera:
 	Scene::Camera *camera = nullptr;
