@@ -15,6 +15,7 @@ struct ball{
 	Scene::Transform *cur;
 	bool pushable;
 	ball(){velocity = glm::vec3(); cur = nullptr; pushable = true;}
+	ball(glm::vec3 v, Scene::Transform *c, bool b) : velocity(std::move(v)), cur(c), pushable(b) {};
 	void update(float elapsed){
 		cur->position += velocity * elapsed;
 		velocity *= (1.0f - deacc_const * elapsed);
@@ -72,7 +73,8 @@ struct PlayMode : Mode {
 	int right_pts = 0;
 
 	std::vector<std::shared_ptr<Scene::Transform>> coins;
-	
+	std::vector<ball> fake_coins;
+	float total_time = 0.0f;
 	//camera:
 	Scene::Camera *camera = nullptr;
 
