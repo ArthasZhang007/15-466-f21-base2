@@ -12,11 +12,12 @@
 #include <cmath>
 #include <random>
 #include <string>
+#include <iostream>
 #include <algorithm>
 
 namespace
 {
-	const float collide_radius = 3.0f;
+	const float collide_radius = 20.0f;
 	const float inf = 9999999.0f;
 	float len(glm::vec3 x)
 	{
@@ -36,7 +37,7 @@ namespace
 		std::swap(ball_A.velocity, ball_B.velocity);
 	}
 	float distance(Scene::Transform &A, Scene::Transform &B){
-		return len(real_pos(A) - real_pos(B));
+		return len((A.position) - (B.position));
 	}
 	bool iscollide(Scene::Transform &A, Scene::Transform &B)
 	{
@@ -104,11 +105,13 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 		}
 		if (transform.name.substr(0, 4) == "Coin")
 		{
-
+			glm::vec3 fake_speed = {0.0f,0.0f,0.0f};\
+			auto fake_ball = ball(fake_speed, &transform, false);
+			fake_coins.push_back(std::move(fake_ball));
 			coins.emplace_back(&transform);
 		}
 		std::cout << transform.name << "\n";
-		auto &A = real_pos(transform);
+		auto A = real_pos(transform);
 		std::cout << " coin.x: " << A.x << " coin.y " << A.y << " coin.z " << A.z << "\n";
 	}
 	//get pointer to camera for convenience:
@@ -169,17 +172,14 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			else
 				right_force = std::max(--right_force, 1);
 		}
-		else if (evt.key.keysym.sym == SDLK_SPACE)
-		{
-			if (player1_t.pushable && left_turn)
-			{
+		else if (evt.key.keysym.sym == SDLK_SPACE) {
+			if (player1_t.pushable && left_turn) {
 				player1_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_1;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
 				player1_t.push(extend(dir, 0.0f + left_force * 30));
 			}
-			if (player2_t.pushable && !left_turn)
-			{
+			if (player2_t.pushable && !left_turn) {
 				player2_t.pushable = false;
 				float angle = 2.0f * float(M_PI) * wobble_2;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
@@ -187,46 +187,36 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			}
 			left_turn = !left_turn;
 		}
-		else if (evt.key.keysym.sym == SDLK_r)
-		{
+		else if (evt.key.keysym.sym == SDLK_r) {
 			PlayMode();
 		}
 	}
-	else if (evt.type == SDL_KEYUP)
-	{
-		if (evt.key.keysym.sym == SDLK_a)
-		{
+	else if (evt.type == SDL_KEYUP) {
+		if (evt.key.keysym.sym == SDLK_a) {
 			left.pressed = false;
 			return true;
 		}
-		else if (evt.key.keysym.sym == SDLK_d)
-		{
+		else if (evt.key.keysym.sym == SDLK_d) {
 			right.pressed = false;
 			return true;
 		}
-		else if (evt.key.keysym.sym == SDLK_w)
-		{
+		else if (evt.key.keysym.sym == SDLK_w) {
 			up.pressed = false;
 			return true;
 		}
-		else if (evt.key.keysym.sym == SDLK_s)
-		{
+		else if (evt.key.keysym.sym == SDLK_s) {
 			down.pressed = false;
 			return true;
 		}
 	}
-	else if (evt.type == SDL_MOUSEBUTTONDOWN)
-	{
-		if (SDL_GetRelativeMouseMode() == SDL_FALSE)
-		{
+	else if (evt.type == SDL_MOUSEBUTTONDOWN) {
+		if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
 			SDL_SetRelativeMouseMode(SDL_TRUE);
 			return true;
 		}
 	}
-	else if (evt.type == SDL_MOUSEMOTION)
-	{
-		if (SDL_GetRelativeMouseMode() == SDL_TRUE)
-		{
+	else if (evt.type == SDL_MOUSEMOTION) {
+		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
 			glm::vec2 motion = glm::vec2(
 				evt.motion.xrel / float(window_size.y),
 				-evt.motion.yrel / float(window_size.y));
@@ -239,14 +229,12 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-void PlayMode::update(float elapsed)
-{
+void PlayMode::update(float elapsed) {
 
 	//slowly rotates through [0,1):
 	total_time += elapsed;
 
-	if (player1_t.pushable)
-	{
+	if (player1_t.pushable) {
 		wobble_1 += elapsed / 5.0f;
 		wobble_1 -= std::floor(wobble_1);
 		float angle_1 = 2.0f * float(M_PI) * wobble_1;
@@ -254,8 +242,7 @@ void PlayMode::update(float elapsed)
 														angle_1,
 														glm::vec3(0.0f, 0.0f, 1.0f));
 	}
-	else if (player2_t.pushable)
-	{
+	else if (player2_t.pushable) {
 		wobble_2 += elapsed / 5.0f;
 		wobble_2 -= std::floor(wobble_2);
 		float angle_2 = 2.0f * float(M_PI) * wobble_2;
@@ -269,6 +256,7 @@ void PlayMode::update(float elapsed)
 		player1_t.update(elapsed);
 		player2_t.update(elapsed);
 		//collide
+		/*
 		for (auto &c : coins)
 		{
 			if(total_time >= 1.5f){
@@ -279,20 +267,40 @@ void PlayMode::update(float elapsed)
 
 			if (iscollide(*c, *player1_t.cur))
 			{
+				std::cout << "left ball collide \n";
 				++left_pts;
 				remove_off(*c);
 			}
 			else if (iscollide(*c, *player2_t.cur))
 			{
+				std::cout << "right ball collide \n";
 				++right_pts;
 				remove_off(*c);
 			}
 		}
-		if (iscollide(*player1_t.cur, *player2_t.cur))
-		{
+		*/
+		for (auto &c : fake_coins) {
+			if(total_time >= 1.5f){
+				std::cout<<c.cur->name << " :1 " << distance(*c.cur, *player1_t.cur) <<std::endl;
+				std::cout<<c.cur->name << " :2 " << distance(*c.cur, *player2_t.cur) <<std::endl;
+			}
+
+			if (iscollide(*c.cur, *player1_t.cur)) {
+				std::cout << "left ball collide \n";
+				++left_pts;
+				remove_off(*c.cur);
+			}
+			else if (iscollide(*c.cur, *player2_t.cur)) {
+				std::cout << "right ball collide \n";
+				++right_pts;
+				remove_off(*c.cur);
+			}
+		}
+		if (iscollide(*player1_t.cur, *player2_t.cur)) {
+			std::cout << "ball collide \n";
 			collide(player1_t, player2_t);
 		}
-		if(total_time > 1.5f){
+		if(total_time > 1.5f) {
 			total_time = 0.0f;
 		}
 	}
@@ -330,8 +338,7 @@ void PlayMode::update(float elapsed)
 	down.downs = 0;
 }
 
-void PlayMode::draw(glm::uvec2 const &drawable_size)
-{
+void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	//update camera aspect ratio for drawable:
 	camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
