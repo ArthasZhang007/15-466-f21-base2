@@ -15,7 +15,7 @@
 #include <algorithm>
 
 namespace {
-	const float collide_radius = 0.15f;
+	const float collide_radius = 6.0f;
 	const float inf = 9999999.0f;
 	float len(glm::vec3 x){
 		return std::sqrt(x.x*x.x+x.y*x.y+x.z*x.z);
@@ -24,7 +24,7 @@ namespace {
 		return x / len(x) * k;
 	}
 	void collide(ball &ball_A, ball & ball_B){
-		std::swap(ball_A.velocity, ball_B.velocity);
+		// std::swap(ball_A.velocity, ball_B.velocity);
 	} 
 	bool iscollide(Scene::Transform &A, Scene::Transform &B){
 		return std::abs(len(A.position - B.position)) <= collide_radius;
@@ -64,9 +64,13 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 	{
 		std::cout << transform.name << std::endl;
 		if (transform.name == "player1") {
+			std::cout << transform.name << "\n";
+			std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
 			player1_t.cur = &transform;
 		}
 		if (transform.name == "player2") {
+			std::cout << transform.name << "\n";
+			std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
 			player2_t.cur = &transform;
 		}
 
@@ -78,6 +82,11 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 		if (transform.name == "arrow2") {
 			arrow2_t = &transform;
 			arrow2_base_rotation = arrow2_t->rotation;
+		}
+		if (transform.name.substr(0,4) == "Coin") {
+			std::cout << transform.name << "\n";
+			std::cout << "coin.x: " << transform.position.x << "coin.y" << transform.position.y << "coin.z" << transform.position.z << "\n";
+			coins.emplace_back(&transform);
 		}
 	}
 	//get pointer to camera for convenience:
@@ -216,6 +225,19 @@ void PlayMode::update(float elapsed) {
 	if (!player2_t.pushable && !player1_t.pushable) {
 		player1_t.update(elapsed);
 		player2_t.update(elapsed);
+		//collide
+		for (auto &c : coins) {
+			if (iscollide(*c, *player1_t.cur)) {
+				++left_pts;
+				remove_off(*c);
+			} else if (iscollide(*c, *player2_t.cur)) {
+				++right_pts;
+				remove_off(*c);
+			}
+		}
+		if (iscollide(*player1_t.cur, *player2_t.cur)) {
+			collide(player1_t, player2_t);
+		}
 	}
 
 	//move camera:
