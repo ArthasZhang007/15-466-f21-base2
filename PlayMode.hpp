@@ -56,10 +56,13 @@ struct PlayMode : Mode {
 	ball player1_t;
 	ball player2_t;
 	Scene::Transform *arrow1_t = nullptr;
-	glm::quat arrow_base_rotation;
+	Scene::Transform *arrow2_t = nullptr;
+	glm::quat arrow1_base_rotation;
+	glm::quat arrow2_base_rotation;
 
 
-	float wobble = 0.0f;
+	float wobble_1 = 0.0f;
+	float wobble_2 = 0.0f;
 	bool left_turn = true;
 	int left_force = 5;
 	int right_force = 5;

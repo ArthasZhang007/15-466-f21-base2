@@ -59,9 +59,14 @@ PlayMode::PlayMode() : scene(*hexapod_scene)
 			player2_t.cur = &transform;
 		}
 
-		if (transform.name == "arrow") {
+		if (transform.name == "arrow1") {
 			arrow1_t = &transform;
-			arrow_base_rotation = arrow1_t->rotation;
+			arrow1_base_rotation = arrow1_t->rotation;
+		}
+
+		if (transform.name == "arrow2") {
+			arrow2_t = &transform;
+			arrow2_base_rotation = arrow2_t->rotation;
 		}
 	}
 	//get pointer to camera for convenience:
@@ -115,19 +120,22 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			else right_force = std::max(--right_force, 1);
 		}
 		else if (evt.key.keysym.sym == SDLK_SPACE) {
-			if (player1_t.pushable == true && left_turn) {
+			if (player1_t.pushable && left_turn) {
 				player1_t.pushable = false;
-				float angle = 2.0f * float(M_PI) * wobble;
+				float angle = 2.0f * float(M_PI) * wobble_1;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
-				player1_t.push(extend(dir, -2.0f));
+				player1_t.push(extend(dir, -3.5f));
 			}
-			if (player2_t.pushable == true && !left_turn) {
+			if (player2_t.pushable && !left_turn) {
 				player2_t.pushable = false;
-				float angle = 2.0f * float(M_PI) * wobble;
+				float angle = 2.0f * float(M_PI) * wobble_2;
 				glm::vec3 dir(cos(angle), sin(angle), 0.0f);
 				player2_t.push(extend(dir, -2.0f));
 			}
 			left_turn = !left_turn;
+		}
+		else if (evt.key.keysym.sym == SDLK_r){
+			PlayMode();
 		}
 	}
 	else if (evt.type == SDL_KEYUP)
@@ -175,20 +183,33 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	return false;
 }
 
-void PlayMode::update(float elapsed)
-{
+void PlayMode::update(float elapsed) {
 
 	//slowly rotates through [0,1):
-	wobble += elapsed / 10.0f;
-	wobble -= std::floor(wobble);
-
-	float angle = 2.0f * float(M_PI) * wobble;
-
-	if (player1_t.pushable && left_turn) {
-		arrow1_t->rotation = arrow_base_rotation * glm::angleAxis(
-													   angle,
+	if (player1_t.pushable) {
+		wobble_1 += elapsed / 5.0f;
+		wobble_1 -= std::floor(wobble_1);
+		float angle_1 = 2.0f * float(M_PI) * wobble_1;
+		arrow1_t->rotation = arrow1_base_rotation * glm::angleAxis(
+													   angle_1,
+													   glm::vec3(0.0f, 0.0f, 1.0f));
+	} else if (player2_t.pushable){
+		wobble_2 += elapsed / 5.0f;
+		wobble_2 -= std::floor(wobble_2);
+		float angle_2 = 2.0f * float(M_PI) * wobble_2;
+		arrow2_t->rotation = arrow2_base_rotation * glm::angleAxis(
+													   angle_2,
 													   glm::vec3(0.0f, 0.0f, 1.0f));
 	}
+
+	// if (player1_t.pushable && left_turn) {
+		
+	// }
+	// if (player2_t.pushable && !left_turn) {
+	// 	arrow2_t->rotation = arrow_base_rotation * glm::angleAxis(
+	// 												   angle_2,
+	// 												   glm::vec3(0.0f, 0.0f, 1.0f));
+	// }
 	if (!player2_t.pushable && !player1_t.pushable) {
 		player1_t.update(elapsed);
 		player2_t.update(elapsed);
