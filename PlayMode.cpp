@@ -295,10 +295,8 @@ void PlayMode::update(float elapsed) {
 		}
 		if(total_time > 1.5f) {
 			total_time = 0.0f;
-		}
-		
+		}	
 	}
-	
 
 	//move camera:
 	{
@@ -331,6 +329,20 @@ void PlayMode::update(float elapsed) {
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
+
+	glm::vec3 zeros = {0.0f, 0.0f, 0.0f};
+	if (len(player1_t.velocity - zeros) <= 0.1 && len(player2_t.velocity - zeros) <= 0.1) {
+		//restart arrow choice
+		if (distance(*endpt1, *player1_t.cur) > collide_radius * 2) {
+			player1_t.pushable = true;	
+		}
+		if (distance(*endpt2, *player2_t.cur) > collide_radius * 2) {
+			player2_t.pushable = true;	
+		}
+		// relocate the arrow to be the ball positions
+		// arrow1_t->position = player1_t.cur->position;
+		// arrow2_t->position = player2_t.cur->position;
+	}
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
