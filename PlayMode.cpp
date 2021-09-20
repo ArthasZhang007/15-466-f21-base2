@@ -27,7 +27,7 @@ namespace {
 		std::swap(ball_A.velocity, ball_B.velocity);
 	} 
 	bool iscollide(Scene::Transform &A, Scene::Transform &B){
-		return std::fabs(A.position - B.position) <= collide_radius;
+		return std::abs(A.position - B.position) <= collide_radius;
 	}
 	void remove_off(Scene::Transform &A){
 		A.position = glm::vec3(inf,inf,inf);
